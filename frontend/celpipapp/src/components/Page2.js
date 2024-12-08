@@ -204,7 +204,7 @@ const Page2 = () => {
         <CatchySentence>
           Need more practice?
         </CatchySentence>
-        <QuizButton onClick={handleQuizRedirect}>Take the Quiz</QuizButton>
+        <QuizButton onClick={handleQuizRedirect}>Learn words</QuizButton>
       </QuizSection>
     </Container>
   );
