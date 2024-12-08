@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import pandas as pd
 import numpy as np 
 from flask_cors import CORS
+import random
 
 # Initialize Flask app
 print("Initializing Flask...")
@@ -33,49 +34,46 @@ def get_synonym_antonym(word):
     else:
         return "Synonym not found", "Antonym not found"
     
-@app.route("/api/validate_quiz", methods=["POST"])
-def validate_quiz():
-    data = request.get_json()
-    word = data.get("word", "").strip().lower()
-    answer = data.get("answer", "").strip().lower()
-    type_of_check = data.get("type", "").strip().lower()  # 'synonym' or 'antonym'
+@app.route("/api/get_random_word", methods=["GET"])
+def get_random_word():
+    random_word = random.choice(df["Word"].dropna().values)
+    return jsonify({"word": random_word})
 
-    # Fetch data from the sheet
-    result = df[df["Word"].str.lower() == word]
+@app.route('/validate-answer', methods=['POST'])
+def validate_answer():
+    data = request.json
+    word = data.get("word")
+    answer = data.get("answer")
+    type = data.get("type")  # synonym or antonym
+
+    # Find the row for the word
+    word_row = df[df['Word'].str.lower() == word.lower()]
     
-    if result.empty:
-        return jsonify({"message": "No such word found"}), 400
+    if word_row.empty:
+        return jsonify({"isValid": False, "message": "No such word found"})
 
-    # Based on the type (synonym or antonym), validate the answer
-    if type_of_check == "synonym":
-        synonym_str = result.iloc[0].get("Synonyms", "Synonym not found")
-        
-        # Handle NaN or missing synonyms
-        if pd.isna(synonym_str) or synonym_str == "Synonym not found":
-            return jsonify({"message": "Oops! No value found for synonym"}), 400
-        
-        synonyms = synonym_str.split(",")  # Split multiple synonyms
-        if answer in [synonym.strip().lower() for synonym in synonyms]:
-            return jsonify({"message": "Hurray! that's the right answer!", "status": "success"}), 200
+    # Check for synonym or antonym based on the dropdown value
+    if type == "synonym":
+        synonyms = word_row['Synonyms'].values[0]
+        if pd.isna(synonyms) or answer.lower() not in synonyms.lower().split(','):
+            return jsonify({"isValid": False, "message": "Incorrect synonym"})
         else:
-            return jsonify({"message": "Oops! that's an wrong synonym!", "status": "failure"}), 400
-
-    elif type_of_check == "antonym":
-        antonym_str = result.iloc[0].get("Antonyms", "Antonym not found")
-        
-        # Handle NaN or missing antonyms
-        if pd.isna(antonym_str) or antonym_str == "Antonym not found":
-            return jsonify({"message": "Oops! No value found for synonym"}), 400
-        
-        antonyms = antonym_str.split(",")  # Split multiple antonyms
-        if answer in [antonym.strip().lower() for antonym in antonyms]:
-            return jsonify({"message": "Hurray! that's the right answer!", "status": "success"}), 200
+            return jsonify({"isValid": True, "message": "Correct synonym"})
+    
+    elif type == "antonym":
+        antonyms = word_row['Antonyms'].values[0]
+        if pd.isna(antonyms) or answer.lower() not in antonyms.lower().split(','):
+            return jsonify({"isValid": False, "message": "Incorrect antonym"})
         else:
-            return jsonify({"message": "Oops! that's an wrong synonym!", "status": "failure"}), 400
+            return jsonify({"isValid": True, "message": "Correct antonym"})
 
-    else:
-        return jsonify({"message": "Invalid type, must be either 'synonym' or 'antonym'"}), 400
+    return jsonify({"isValid": False, "message": "Invalid type"})
 
+@app.route('/get-next-word', methods=['GET'])
+def get_next_word():
+    # Get a random word from the "Word" column
+    random_word = random.choice(df['Word'].dropna().tolist())  # Choose a random word
+    return jsonify({"word": random_word})
 
 # API endpoint for page 1 logic
 @app.route("/api/vocabulary", methods=["POST"])
@@ -93,4 +91,3 @@ def vocabulary():
 if __name__ == "__main__":
     print("Starting Flask App...")
     app.run(host="0.0.0.0", debug=True)
-
