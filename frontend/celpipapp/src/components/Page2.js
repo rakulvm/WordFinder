@@ -75,6 +75,13 @@ const ResultWrapper = styled.div`
   color: ${(props) => (props.isCorrect ? "green" : "red")};
 `;
 
+const AnswerWrapper = styled.div`
+  margin-top: 20px;
+  font-size: 1.2rem;
+  font-family: "Permanent Marker";
+  color: ${(props) => (props.answers ? "green" : "red")};
+`;
+
 const QuizSection = styled.div`
   display: flex;
   flex-direction: column;
@@ -109,6 +116,7 @@ const CatchySentence = styled.p`
 const Page2 = () => {
   const [word, setWord] = useState("");
   const [userAnswer, setUserAnswer] = useState("");
+  const [answers, setdbAnswers] = useState("");
   const [dropdownValue, setDropdownValue] = useState("synonym");
   const [result, setResult] = useState("");
   const [isCorrect, setIsCorrect] = useState(null);
@@ -134,6 +142,7 @@ const Page2 = () => {
       setWord(data.word); // Set the random word to the state
       setUserAnswer(""); // Clear the user's previous answer
       setResult(""); // Clear any previous result
+      setdbAnswers("");
       setIsCorrect(null); // Reset correctness status
     } catch (error) {
       console.error("Error fetching random word:", error);
@@ -144,6 +153,7 @@ const Page2 = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setdbAnswers("")
     setResult(""); // Clear previous result
     setIsCorrect(null); // Reset correctness status
 
@@ -162,14 +172,17 @@ const Page2 = () => {
       const data = await response.json();
       if (data.isValid) {
         setResult("Correct! Well done.");
+        setdbAnswers(data.answers);
         setIsCorrect(true);
       } else {
         setResult("Incorrect, please try again.");
+        setdbAnswers(data.answers);
         setIsCorrect(false);
       }
     } catch (error) {
       console.error("Error validating answer:", error);
       setResult("Error occurred while validating.");
+      setdbAnswers("");
       setIsCorrect(false);
     }
   };
@@ -214,7 +227,11 @@ const Page2 = () => {
               {result}
             </ResultWrapper>
           )}
-
+          {answers && (
+            <AnswerWrapper answers={answers}>
+              {answers}
+            </AnswerWrapper>
+          )}
           <Button onClick={fetchRandomWord}>Next Word</Button>
         </QuizSection>
       )}

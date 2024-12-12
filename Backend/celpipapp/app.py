@@ -56,16 +56,16 @@ def validate_answer():
     if type == "synonym":
         synonyms = word_row['Synonyms'].values[0]
         if pd.isna(synonyms) or answer.lower() not in synonyms.lower().split(','):
-            return jsonify({"isValid": False, "message": "Incorrect synonym"})
+            return jsonify({"isValid": False, "message": "Incorrect synonym", "answers": synonyms})
         else:
-            return jsonify({"isValid": True, "message": "Correct synonym"})
+            return jsonify({"isValid": True, "message": "Correct synonym", "answers": synonyms})
     
     elif type == "antonym":
         antonyms = word_row['Antonyms'].values[0]
         if pd.isna(antonyms) or answer.lower() not in antonyms.lower().split(','):
-            return jsonify({"isValid": False, "message": "Incorrect antonym"})
+            return jsonify({"isValid": False, "message": "Incorrect antonym", "answers": synonyms})
         else:
-            return jsonify({"isValid": True, "message": "Correct antonym"})
+            return jsonify({"isValid": True, "message": "Correct antonym", "answers": synonyms})
 
     return jsonify({"isValid": False, "message": "Invalid type"})
 
